@@ -5,27 +5,38 @@ import './css/styles.css';
 
 $(document).ready(function() {
   $('#weatherLocation').click(function() {
-    const city = $('#location').val();
+    const city = $('#city').val();
     const state = $('#state').val();
     $('#location').val("");
 
-    let request = new XMLHttpRequest();
-    const url = `http://api.openweathermap.org/data/2.5/weather?q=${city},${state}&appid=${process.env.API_KEY}`
+    let promise = new Promise(function(resolve, reject) {
 
-    request.onreadystatechange = function() {
-      if (this.readyState === 4 && this.status === 200) {
-        const response = JSON.parse(this.responseText);
-        getElements(response);
+    let request = new XMLHttpRequest();
+    const url = `http://api.openweathermap.org/data/2.5/weather?q=${city},${state}&appid=${process.env.API_KEY}`;
+
+    request.onload = function() {
+      if (this.status === 200) {
+        resolve(request.response);
+      } else {
+        reject(request.response);
       }
     }
 
     request.open("GET", url, true);
     request.send();
+  });
 
-    function getElements(response) {
-      $('.showHumidity').text(`The humidity in ${city} is ${response.main.humidity}%`);
-      $('.showTemp').text(`The temperature in Kelvins is ${response.main.temp} degrees.`);
-      $('.showWindSpeed').text(`The wind speed is ${response.wind.speed} m/s.`)
-    }
+  promise.then(function(response) {
+    const body = JSON.parse(response);
+      $('.showHumidity').text(`The humidity in ${city} is ${body.main.humidity}%`);
+      $('.showTemp').text(`The temperature in Kelvins is ${body.main.temp} degrees.`);
+      $('.showWindSpeed').text(`The wind speed is ${body.wind.speed} m/s.`);
+      $('.showErrors').text("");
+  }, function(error) {
+    $('.showErrors').text(`There was an error processing your request: ${error}`);
+      $('.showHumidity').text("");
+      $('.showTemp').text("");
+      $('.showWindSpeed').text("");
+    });
   });
 });
